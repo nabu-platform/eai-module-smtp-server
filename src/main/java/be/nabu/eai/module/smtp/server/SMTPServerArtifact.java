@@ -58,7 +58,6 @@ public class SMTPServerArtifact extends JAXBArtifact<SMTPServerConfiguration> im
 		try {
 			Integer port = getConfig().getPort();
 			SSLContext context = null;
-			
 			if (getConfig().getKeystore() != null && getConfig().getKeyAlias() != null) {
 				KeyStoreHandler keyStoreHandler = new KeyStoreHandler(getConfig().getKeystore().getKeyStore().getKeyStore());
 				KeyManager[] keyManagers = keyStoreHandler.getKeyManagers();
@@ -76,7 +75,6 @@ public class SMTPServerArtifact extends JAXBArtifact<SMTPServerConfiguration> im
 			else if (port == null) {
 				port = 25;
 			}
-		
 			Integer ioPoolSize = getConfig().getIoPoolSize() == null ? new Integer(System.getProperty(SMTP_IO_POOL_SIZE, "2")) : getConfig().getIoPoolSize();
 			Integer processPoolSize = getConfig().getPoolSize() == null ? new Integer(System.getProperty(SMTP_PROCESS_POOL_SIZE, "5")) : getConfig().getPoolSize();
 			
@@ -98,14 +96,23 @@ public class SMTPServerArtifact extends JAXBArtifact<SMTPServerConfiguration> im
 				new EventDispatcherImpl(), 
 				new RepositoryThreadFactory(getRepository())
 			);
-			
 			if (getConfig().isForward()) {
 				server.getDispatcher().subscribe(Part.class, new MailForwarder(getConfig().getServerName(), null));
 			}
 			
-			server.start();
-			
 			this.server = server;
+			Thread thread = new Thread(new Runnable() {
+				@Override
+				public void run() {
+					try {
+						server.start();
+					}
+					catch (Exception e) {
+						logger.error("Could not start server", e);
+					}
+				}
+			});
+			thread.start();
 		}
 		catch (Exception e) {
 			logger.error("Could not start smtp server: " + getId(), e);
