@@ -58,6 +58,37 @@
 		</dependency>
 		
 		<dependency>
+			<groupId>be.nabu.libs.authentication</groupId>
+			<artifactId>authentication-api</artifactId>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>be.nabu.libs.resources</groupId>
+			<artifactId>resources-memory</artifactId>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>be.nabu.libs.events</groupId>
+			<artifactId>events-api</artifactId>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>be.nabu.libs.http</groupId>
+			<artifactId>http-api</artifactId>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>be.nabu.libs.nio</groupId>
+			<artifactId>nio-server</artifactId>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>be.nabu.utils</groupId>
+			<artifactId>utils-mime</artifactId>
+			<scope>provided</scope>
+		</dependency>
+		
+		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-api</artifactId>
 			<scope>provided</scope>
