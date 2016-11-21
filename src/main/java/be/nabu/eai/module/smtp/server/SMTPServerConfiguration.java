@@ -1,5 +1,8 @@
 package be.nabu.eai.module.smtp.server;
 
+import java.util.List;
+
+import javax.validation.constraints.NotNull;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
@@ -12,16 +15,18 @@ import be.nabu.libs.services.api.DefinedService;
 import be.nabu.utils.io.SSLServerMode;
 
 @XmlRootElement(name = "smtpServer")
-@XmlType(propOrder = { "forward", "passwordAuthenticationService", "port", "serverName", "keystore", "keyAlias", "sslServerMode", "truststore", "poolSize", "ioPoolSize" })
+@XmlType(propOrder = { "forward", "passwordAuthenticationService", "port", "host", "aliases", "keystore", "keyAlias", "sslServerMode", "truststore", "poolSize", "ioPoolSize", "subscriptions" })
 public class SMTPServerConfiguration {
 	
 	private Integer port;
 	private KeyStoreArtifact keystore, truststore;
 	private boolean forward;
 	private DefinedService passwordAuthenticationService;
-	private String keyAlias, serverName;
+	private String keyAlias, host;
+	private List<String> aliases;
 	private Integer poolSize, ioPoolSize;
 	private SSLServerMode sslServerMode;
+	private List<MessageSubscription> subscriptions;
 	
 	@EnvironmentSpecific
 	@XmlJavaTypeAdapter(value = ArtifactXMLAdapter.class)
@@ -64,11 +69,19 @@ public class SMTPServerConfiguration {
 		this.keyAlias = keyAlias;
 	}
 	
-	public String getServerName() {
-		return serverName;
+	@NotNull
+	public String getHost() {
+		return host;
 	}
-	public void setServerName(String serverName) {
-		this.serverName = serverName;
+	public void setHost(String host) {
+		this.host = host;
+	}
+	
+	public List<String> getAliases() {
+		return aliases;
+	}
+	public void setAliases(List<String> aliases) {
+		this.aliases = aliases;
 	}
 	
 	@EnvironmentSpecific
@@ -100,6 +113,13 @@ public class SMTPServerConfiguration {
 	}
 	public void setSslServerMode(SSLServerMode sslServerMode) {
 		this.sslServerMode = sslServerMode;
+	}
+	
+	public List<MessageSubscription> getSubscriptions() {
+		return subscriptions;
+	}
+	public void setSubscriptions(List<MessageSubscription> subscriptions) {
+		this.subscriptions = subscriptions;
 	}
 	
 }

@@ -4,12 +4,12 @@ import java.io.IOException;
 import java.util.List;
 
 import be.nabu.eai.developer.MainController;
-import be.nabu.eai.developer.managers.base.BaseJAXBGUIManager;
+import be.nabu.eai.developer.managers.base.BaseJAXBComplexGUIManager;
 import be.nabu.eai.repository.resources.RepositoryEntry;
 import be.nabu.libs.property.api.Property;
 import be.nabu.libs.property.api.Value;
 
-public class SMTPServerGUIManager extends BaseJAXBGUIManager<SMTPServerConfiguration, SMTPServerArtifact>{
+public class SMTPServerGUIManager extends BaseJAXBComplexGUIManager<SMTPServerConfiguration, SMTPServerArtifact>{
 
 	public SMTPServerGUIManager() {
 		super("SMTP Server", SMTPServerArtifact.class, new SMTPServerManager(), SMTPServerConfiguration.class);

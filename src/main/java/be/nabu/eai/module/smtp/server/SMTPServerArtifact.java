@@ -2,6 +2,8 @@ package be.nabu.eai.module.smtp.server;
 
 import java.io.IOException;
 import java.security.SecureRandom;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
@@ -11,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import be.nabu.eai.authentication.api.PasswordAuthenticator;
+import be.nabu.eai.module.smtp.server.api.MessageSubscriber;
 import be.nabu.eai.repository.RepositoryThreadFactory;
 import be.nabu.eai.repository.api.Repository;
 import be.nabu.eai.repository.artifacts.jaxb.JAXBArtifact;
@@ -19,6 +22,7 @@ import be.nabu.eai.repository.util.SystemPrincipal;
 import be.nabu.libs.artifacts.api.StartableArtifact;
 import be.nabu.libs.artifacts.api.StoppableArtifact;
 import be.nabu.libs.authentication.api.Authenticator;
+import be.nabu.libs.events.api.EventHandler;
 import be.nabu.libs.events.impl.EventDispatcherImpl;
 import be.nabu.libs.nio.api.NIOServer;
 import be.nabu.libs.nio.impl.NIOServerImpl;
@@ -27,7 +31,9 @@ import be.nabu.libs.services.pojo.POJOUtils;
 import be.nabu.libs.smtp.server.SMTPPipelineFactory;
 import be.nabu.libs.smtp.server.forwarder.MailForwarder;
 import be.nabu.utils.io.SSLServerMode;
+import be.nabu.utils.mime.api.Header;
 import be.nabu.utils.mime.api.Part;
+import be.nabu.utils.mime.impl.MimeUtils;
 import be.nabu.utils.security.AliasKeyManager;
 import be.nabu.utils.security.KeyStoreHandler;
 import be.nabu.utils.security.SSLContextType;
@@ -86,7 +92,7 @@ public class SMTPServerArtifact extends JAXBArtifact<SMTPServerConfiguration> im
 				ioPoolSize, 
 				processPoolSize, 
 				new SMTPPipelineFactory(
-					getConfig().getServerName(),
+					getConfig().getHost(),
 					// TODO: proper mail validator
 					null, 
 					getAuthenticator(), 
@@ -96,9 +102,44 @@ public class SMTPServerArtifact extends JAXBArtifact<SMTPServerConfiguration> im
 				new EventDispatcherImpl(), 
 				new RepositoryThreadFactory(getRepository())
 			);
+			
 			if (getConfig().isForward()) {
-				server.getDispatcher().subscribe(Part.class, new MailForwarder(getConfig().getServerName(), null));
+				List<String> names = new ArrayList<String>();
+				names.add(getConfig().getHost());
+				if (getConfig().getAliases() != null) {
+					names.addAll(getConfig().getAliases());
+				}
+				server.getDispatcher().subscribe(Part.class, new MailForwarder(getConfig().getHost(), null, names.toArray(new String[names.size()])));
 			}
+			
+			server.getDispatcher().subscribe(Part.class, new EventHandler<Part, String>() {
+				@Override
+				public String handle(Part event) {
+					if (getConfig().getSubscriptions() != null) {
+						Header originalFrom = MimeUtils.getHeader("X-Original-From", event.getHeaders());
+						Header [] originalTo = MimeUtils.getHeaders("X-Original-From", event.getHeaders());
+						List<String> to = new ArrayList<String>();
+						if (originalTo != null) {
+							for (Header header : originalTo) {
+								to.add(header.getValue());
+							}
+						}
+						Header messageId = MimeUtils.getHeader("X-Generated-Id", event.getHeaders());
+						for (MessageSubscription subscription : getConfig().getSubscriptions()) {
+							if (subscription.getFromMatch() == null || originalFrom == null || originalFrom.getValue().matches(subscription.getFromMatch())) {
+								if (subscription.getMessageSubscriber() != null) {
+									MessageSubscriber subscriber = POJOUtils.newProxy(MessageSubscriber.class, subscription.getMessageSubscriber(), getRepository(), SystemPrincipal.ROOT);
+									subscriber.handle(getId(), messageId == null ? null : messageId.getValue(), originalFrom == null ? null : originalFrom.getValue(), to, event);
+								}
+								if (!subscription.isContinue()) {
+									break;
+								}
+							}
+						}
+					}
+					return null;
+				}
+			});
 			
 			this.server = server;
 			Thread thread = new Thread(new Runnable() {
