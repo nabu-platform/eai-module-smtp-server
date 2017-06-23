@@ -109,7 +109,7 @@ public class SMTPServerArtifact extends JAXBArtifact<SMTPServerConfiguration> im
 				if (getConfig().getAliases() != null) {
 					names.addAll(getConfig().getAliases());
 				}
-				server.getDispatcher().subscribe(Part.class, new MailForwarder(getConfig().getHost(), null, names.toArray(new String[names.size()])));
+				server.getDispatcher().subscribe(Part.class, new MailForwarder(null, null, names.toArray(new String[names.size()])));
 			}
 			
 			server.getDispatcher().subscribe(Part.class, new EventHandler<Part, String>() {
