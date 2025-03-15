@@ -170,6 +170,8 @@ public class SMTPServerArtifact extends JAXBArtifact<SMTPServerConfiguration> im
 					}
 				}
 			});
+			thread.setDaemon(true);
+			thread.setName(getId());
 			thread.start();
 		}
 		catch (Exception e) {
